@@ -54,16 +54,31 @@ public class Deployer implements QuarkusApplication {
         }
 
         // Execute terraform init
-//        ProcessBuilder processBuilder = new ProcessBuilder();
-//        processBuilder.directory(tmpdir);
-//        processBuilder.command("terraform init");
-        Process process = Runtime.getRuntime().exec("terraform init", null, tmpdir);//processBuilder.start();
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.directory(tmpdir);
+        processBuilder.command("bash", "-c", "terraform init");
+        Process process = processBuilder.start();
+//        Process process = Runtime.getRuntime().exec("terraform init", null, tmpdir);//
         StreamGobbler streamGobbler =
                 new StreamGobbler(process.getInputStream(), System.out::println);
         Future<?> future = Executors.newSingleThreadExecutor().submit(streamGobbler);
         int exitCode = process.waitFor();
         assert exitCode == 0;
         future.get(10, TimeUnit.SECONDS);
+
+        if (exitCode == 0) {
+            System.out.println("terraform apply");
+            ProcessBuilder applyProcessBuilder = new ProcessBuilder();
+            applyProcessBuilder.directory(tmpdir);
+            applyProcessBuilder.command("bash", "-c", "terraform apply");
+            Process applyProcess = applyProcessBuilder.start();
+//        Process process = Runtime.getRuntime().exec("terraform init", null, tmpdir);//
+            StreamGobbler applyProcessStreamGobbler =
+                    new StreamGobbler(applyProcess.getInputStream(), System.out::println);
+            Future<?> applyProcessFuture = Executors.newSingleThreadExecutor().submit(streamGobbler);
+            int applyProcessExitCode = process.waitFor();
+            applyProcessFuture.get(10, TimeUnit.SECONDS);
+        }
 
         return 0;
     }
