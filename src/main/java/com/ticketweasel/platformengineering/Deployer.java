@@ -70,14 +70,14 @@ public class Deployer implements QuarkusApplication {
             System.out.println("terraform apply");
             ProcessBuilder applyProcessBuilder = new ProcessBuilder();
             applyProcessBuilder.directory(tmpdir);
-            applyProcessBuilder.command("bash", "-c", "terraform apply");
+            applyProcessBuilder.command("bash", "-c", "terraform apply -auto-approve");
             Process applyProcess = applyProcessBuilder.start();
 //        Process process = Runtime.getRuntime().exec("terraform init", null, tmpdir);//
             StreamGobbler applyProcessStreamGobbler =
                     new StreamGobbler(applyProcess.getInputStream(), System.out::println);
-            Future<?> applyProcessFuture = Executors.newSingleThreadExecutor().submit(streamGobbler);
-            int applyProcessExitCode = process.waitFor();
-            applyProcessFuture.get(10, TimeUnit.SECONDS);
+            Future<?> applyProcessFuture = Executors.newSingleThreadExecutor().submit(applyProcessStreamGobbler);
+            int applyProcessExitCode = applyProcess.waitFor();
+            applyProcessFuture.get(30, TimeUnit.SECONDS);
         }
 
         return 0;
